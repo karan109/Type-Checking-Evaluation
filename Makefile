@@ -1,12 +1,12 @@
 all:
-	mlyacc formula.yacc
-	mllex formula.lex
+	mlyacc exp.yacc
+	mllex exp.lex
 	mlton a3.mlb
 run:
 	./a3 input.txt
 clean:
-	rm formula.lex.sml
-	rm formula.yacc.desc
-	rm formula.yacc.sig
-	rm formula.yacc.sml
+	rm exp.lex.sml
+	rm exp.yacc.desc
+	rm exp.yacc.sig
+	rm exp.yacc.sml
 	rm a3
