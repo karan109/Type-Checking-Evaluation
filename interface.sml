@@ -32,11 +32,11 @@ fun parse (lexer) =
 	val (nextToken, lexer) = CalcParser.Stream.get lexer
     in
         if CalcParser.sameToken(nextToken, dummyEOF) then 
-            print("")
- 	  else print("Warning: Unconsumed input \n")
+            (print(""); result)
+ 	  else (print("Warning: Unconsumed input \n"); result)
     end
-    handle ParseError => print(!error_list)
+    (*handle ParseError => print(!error_list)*)
 
-val file_name = TextIO.openIn (head(CommandLine.arguments()));
+val file_name = TextIO.openIn ("input.txt"(*head(CommandLine.arguments())*));
 val input_str = TextIO.inputAll file_name;
-(parse o stringToLexer) (input_str);
+val ok = (parse o stringToLexer) (input_str);
