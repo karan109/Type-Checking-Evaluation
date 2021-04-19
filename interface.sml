@@ -13,7 +13,8 @@ structure CalcParser =
      
 fun invoke lexstream =
     	     	let fun print_error (s,pos:int,col:int) =
-		    	(error_list := (!error_list)^("Syntax Error:" ^ (Int.toString pos) ^ ":" ^ (Int.toString col) ^ ":" ^ s ^ "\n\n"))
+		    	(error_list := (!error_list)^("Syntax Error:" ^ (Int.toString pos) ^ ":" ^ (Int.toString col) ^ ":" ^ s ^ "\n\n");
+                    print("Syntax Error:" ^ (Int.toString pos) ^ ":" ^ (Int.toString col) ^ ":" ^ s ^ "\n\n"))
 		in
 		    (error := true; CalcParser.parse(0,lexstream,print_error,()))
 		end
