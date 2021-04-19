@@ -7,15 +7,10 @@ datatype binop = Plus | Minus | Times | And | Or | Xor | Equals | Implies | Grea
 and
 	unop = Not | Negate
 
-datatype primitive = Bool | Int
-					| Primitive of primitive
-and
-	typ = Type of typ
-		| Type0 of primitive 
-		| Type1 of primitive * primitive
-		| Type2 of typ * primitive
-		| Type3 of primitive * typ
-		| Type4 of typ * typ
+datatype typ = Bool
+		| Int
+		| Type of typ
+		| BinType of typ * typ
 
 datatype decl = ValDecl of id * exp
 
