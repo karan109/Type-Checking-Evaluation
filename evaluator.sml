@@ -83,7 +83,16 @@ evalAppExp(var : exp, a: exp, env : environment) =
 		fun eval() = 
 			case f of 
 				FunVal(VarExp(arg), typ1, typ2, expression, env_fun) =>
-					evalExp(expression, envAdd(arg, evalExp(a, env), env_fun))
+					let 
+						val res = evalExp(expression, envAdd(arg, evalExp(a, env), env_fun))
+					in
+						(case res of
+							BoolVal b => if checkTypes(Bool, typ2) = false then raise brokenTypes else res
+							| IntVal n => if checkTypes(Int, typ2) = false then raise brokenTypes else res
+							| FunVal (arg_temp, typ1_temp, typ2_temp, expression_temp, env_temp) => 
+								if checkTypes(BinType(typ1_temp, typ2_temp), typ2) = false then raise brokenTypes else res
+							| _ => raise brokenTypes )
+					end
 				| _ => raise brokenTypes
 		in
 			if check() then eval()
