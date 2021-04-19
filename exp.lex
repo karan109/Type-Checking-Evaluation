@@ -70,6 +70,7 @@ all = .;
 "fn"      => (lex_result := append(rev(String.explode("FN \""^yytext^"\", ")), (!lex_result)); col := (!col) + String.size(yytext); Tokens.FN(!pos,!col));
 ":"      => (lex_result := append(rev(String.explode("COLON \""^yytext^"\", ")), (!lex_result)); col := (!col) + String.size(yytext); Tokens.COLON(!pos,!col));
 "->"      => (lex_result := append(rev(String.explode("ARROW \""^yytext^"\", ")), (!lex_result)); col := (!col) + String.size(yytext); Tokens.ARROW(!pos,!col));
+"=>"      => (lex_result := append(rev(String.explode("DEFARROW \""^yytext^"\", ")), (!lex_result)); col := (!col) + String.size(yytext); Tokens.DEFARROW(!pos,!col));
 "int"      => (lex_result := append(rev(String.explode("INTTYPE \""^yytext^"\", ")), (!lex_result)); col := (!col) + String.size(yytext); Tokens.INTTYPE(!pos,!col));
 "bool"      => (lex_result := append(rev(String.explode("BOOLTYPE \""^yytext^"\", ")), (!lex_result)); col := (!col) + String.size(yytext); Tokens.BOOLTYPE(!pos,!col));
 "("      => (lex_result := append(rev(String.explode("LPAREN \""^yytext^"\", ")), (!lex_result)); col := (!col) + String.size(yytext); Tokens.LPAREN(!pos,!col));

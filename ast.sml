@@ -25,15 +25,16 @@ and
 		| LetExp of decl * exp
 		| IfThenElseExp of exp * exp * exp
 		| AppExp of exp * exp
-		| FnExp of exp * typ * typ * exp
+		| FnExp of exp * typ * typ * exp * (id * value) list
 
 and
-	function = Fun of exp * exp * typ * typ * exp
-				       
-datatype value = IntVal of int
+	function = Fun of exp * exp * typ * typ * exp * (id * value) list
+and			       
+	value = IntVal of int
                | StringVal of string
-	       | BoolVal of bool
-				
+               | BoolVal of bool
+               | FunVal of exp * typ * typ * exp * (id * value) list
+	
 type environment = (id * value) list
 
 fun envAdd (var:id, v:value, env:environment) =
