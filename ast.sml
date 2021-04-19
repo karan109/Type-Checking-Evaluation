@@ -31,9 +31,9 @@ and
 	function = Fun of exp * exp * typ * typ * exp * (id * value) list
 and			       
 	value = IntVal of int
-               | StringVal of string
-               | BoolVal of bool
-               | FunVal of exp * typ * typ * exp * (id * value) list
+           | StringVal of string
+           | BoolVal of bool
+           | FunVal of exp * typ * typ * exp * (id * value) list
 	
 type environment = (id * value) list
 
@@ -42,12 +42,12 @@ fun envAdd (var:id, v:value, env:environment) =
 
 fun envLookup (var:id, env:environment) =
     case List.find(fn (x, _) => x = var) env of
-				       SOME (x, v)   => v
-				    |   NONE => raise Fail "Environment lookup error"
+	       SOME (x, v)   => v
+	    |   NONE => raise Fail "Environment lookup error"
 
 datatype statement = Function of function
-					| Expression of exp
+	| Expression of exp
 and
-	program = Program of statement * program
-				| Single of statement
+program = Program of statement * program
+	| Single of statement
 end

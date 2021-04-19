@@ -9,8 +9,7 @@
 | FUN | COLON | ARROW | FN | INTTYPE | BOOLTYPE | DEFARROW
 
 %nonterm exp of AST.exp | START of AST.program | program of AST.program | decl of AST.decl
-| function of AST.function | statement of AST.statement
-| typ of AST.typ
+| function of AST.function | statement of AST.statement | typ of AST.typ
 
 %pos int
 
@@ -20,6 +19,7 @@
 
 %right ID
 %right ARROW
+%right DEFARROW
 %left THEN ELSE IF FI
 %right IMPLIES
 %left AND OR XOR EQUALS
