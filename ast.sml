@@ -37,8 +37,10 @@ and
 	
 type environment = (id * value) list
 
-fun envAdd (var:id, v:value, env:environment) =
-    (var,v)::env
+fun envAdd (var:id, v:value, []) = [(var,v)]
+	| envAdd (var:id, v:value, (x, y)::ls) = 
+		if x = var then (var, v)::ls
+		else (x, y)::envAdd (var, v, ls)
 
 fun envLookup (var:id, env:environment) =
     case List.find(fn (x, _) => x = var) env of
