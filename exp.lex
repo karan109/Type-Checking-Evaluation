@@ -66,12 +66,12 @@ all = .;
 "let"      => (lex_result := append(rev(String.explode("let \""^yytext^"\", ")), (!lex_result)); col := (!col) + String.size(yytext); Tokens.LET(!pos,!col));
 "in"      => (lex_result := append(rev(String.explode("in \""^yytext^"\", ")), (!lex_result)); col := (!col) + String.size(yytext); Tokens.IN(!pos,!col));
 "end"      => (lex_result := append(rev(String.explode("end \""^yytext^"\", ")), (!lex_result)); col := (!col) + String.size(yytext); Tokens.END(!pos,!col));
+"=>"      => (lex_result := append(rev(String.explode("DEFARROW \""^yytext^"\", ")), (!lex_result)); col := (!col) + String.size(yytext); Tokens.DEFARROW(!pos,!col));
 "="      => (lex_result := append(rev(String.explode("ASSIGN \""^yytext^"\", ")), (!lex_result)); col := (!col) + String.size(yytext); Tokens.ASSIGN(!pos,!col));
 "fun"      => (lex_result := append(rev(String.explode("FUN \""^yytext^"\", ")), (!lex_result)); col := (!col) + String.size(yytext); Tokens.FUN(!pos,!col));
 "fn"      => (lex_result := append(rev(String.explode("FN \""^yytext^"\", ")), (!lex_result)); col := (!col) + String.size(yytext); Tokens.FN(!pos,!col));
 ":"      => (lex_result := append(rev(String.explode("COLON \""^yytext^"\", ")), (!lex_result)); col := (!col) + String.size(yytext); Tokens.COLON(!pos,!col));
 "->"      => (lex_result := append(rev(String.explode("ARROW \""^yytext^"\", ")), (!lex_result)); col := (!col) + String.size(yytext); Tokens.ARROW(!pos,!col));
-"=>"      => (lex_result := append(rev(String.explode("DEFARROW \""^yytext^"\", ")), (!lex_result)); col := (!col) + String.size(yytext); Tokens.DEFARROW(!pos,!col));
 "int"      => (lex_result := append(rev(String.explode("INTTYPE \""^yytext^"\", ")), (!lex_result)); col := (!col) + String.size(yytext); Tokens.INTTYPE(!pos,!col));
 "bool"      => (lex_result := append(rev(String.explode("BOOLTYPE \""^yytext^"\", ")), (!lex_result)); col := (!col) + String.size(yytext); Tokens.BOOLTYPE(!pos,!col));
 "("      => (lex_result := append(rev(String.explode("LPAREN \""^yytext^"\", ")), (!lex_result)); col := (!col) + String.size(yytext); Tokens.LPAREN(!pos,!col));
@@ -80,4 +80,3 @@ all = .;
 {tilda}?{digit}+ => (lex_result := append(rev(String.explode("NUM \""^yytext^"\", ")), (!lex_result)); col := (!col) + String.size(yytext); Tokens.NUM(valOf (Int.fromString yytext),!pos,!col));
 {alpha}{alphadigit}* => (lex_result := append(rev(String.explode("ID \""^yytext^"\", ")), (!lex_result)); col := (!col) + String.size(yytext); Tokens.ID(yytext,!pos,!col));
 {all}     => (exc := false; col := (!col) + String.size(yytext); error (yytext,!pos, !col); lex());
-

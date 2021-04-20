@@ -28,7 +28,6 @@
 %right TIMES
 %right NEGATE NOT
 %left TERM
-
 %nonassoc ASSIGN
 
 %start START
@@ -72,5 +71,5 @@ program: statement TERM program (AST.Program(statement, program))
   | exp LESSTHAN exp (AST.BinExp(AST.Lessthan, exp1, exp2))
   | IF exp THEN exp ELSE exp FI (AST.IfThenElseExp(exp1, exp2, exp3))
   | LET decl IN exp END (AST.LetExp(decl, exp))
-  | ID exp (AST.AppExp(AST.VarExp(ID), exp))
+  | LPAREN exp exp RPAREN (AST.AppExp(AST.Exp(exp1), exp2))
   | FN LPAREN ID COLON typ RPAREN COLON typ DEFARROW exp (AST.FnExp(AST.VarExp(ID), AST.Type(typ1), AST.Type(typ2), AST.Exp(exp), []))
