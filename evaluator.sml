@@ -2,7 +2,8 @@ structure EVALUATOR  =
 struct
 open AST
 
-val brokenTypes = Fail "Error in evaluation!"
+(*val brokenTypes = Fail "Error in evaluation!"*)
+exception brokenTypes;
 
 fun checkTypes(t1 : typ, t2 : typ) = 
 	case(t1, t2) of
@@ -99,7 +100,7 @@ evalAppExp(var : exp, a: exp, env : environment) =
 			else raise brokenTypes
 		end
 and
-evalFunc(f : function, env : environment) = StringVal("ok")
+evalFunc(f : function, env : environment) = StringVal("Function Definition")
 
 and
 evalProgram(arg, env) = 
@@ -119,4 +120,21 @@ evalProgram(arg, env) =
 			| Expression(e) =>
 				[evalExp(e, env)] )
 
+(*fun evalResult([]) = []
+	| evalResult(x::l) = 
+		case x of
+			BoolVal b1 => ( Bool.toString b1 ) :: (evalResult l)
+			| IntVal n1 => ( Int.toString n1 ) :: (evalResult l)
+			| FunVal (VarExp(bound) , typ1 , typ2 , expression, env) => "Fn ("^bound^")" :: (evalResult l)
+			| StringVal s1 => s1 :: (evalResult l)
+			| _ => raise brokenTypes*)
+
+fun evalResult([]) = ()
+	| evalResult(x::l) = 
+		case x of
+			BoolVal b1 => ( ( print ((Bool.toString b1)^", ") ) ; (evalResult l) )
+			| IntVal n1 => ( ( print ((Int.toString n1)^", ") ) ; (evalResult l) )
+			| FunVal (VarExp(bound) , typ1 , typ2 , expression, env) =>  ((print ("Fn ("^bound^"), ")) ; (evalResult l))
+			| StringVal s1 => ((print (s1^", ") ) ; (evalResult l))
+			| _ => raise brokenTypes
 end

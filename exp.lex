@@ -38,6 +38,7 @@ structure Tokens= Tokens
 
 alpha=[A-Za-z];
 alphadigit = [A-Za-z0-9];
+tilda = [~];
 digit=[0-9];
 ws = [\ \t];
 all = .;
@@ -76,7 +77,7 @@ all = .;
 "("      => (lex_result := append(rev(String.explode("LPAREN \""^yytext^"\", ")), (!lex_result)); col := (!col) + String.size(yytext); Tokens.LPAREN(!pos,!col));
 ")"      => (lex_result := append(rev(String.explode("RPAREN \""^yytext^"\", ")), (!lex_result)); col := (!col) + String.size(yytext); Tokens.RPAREN(!pos,!col));
 ";"		=> (lex_result := append(rev(String.explode("TERM \""^yytext^"\", ")), (!lex_result)); col := (!col) + String.size(yytext); Tokens.TERM(!pos,!col));
-{digit}+ => (lex_result := append(rev(String.explode("NUM \""^yytext^"\", ")), (!lex_result)); col := (!col) + String.size(yytext); Tokens.NUM(valOf (Int.fromString yytext),!pos,!col));
+{tilda}?{digit}+ => (lex_result := append(rev(String.explode("NUM \""^yytext^"\", ")), (!lex_result)); col := (!col) + String.size(yytext); Tokens.NUM(valOf (Int.fromString yytext),!pos,!col));
 {alpha}{alphadigit}* => (lex_result := append(rev(String.explode("ID \""^yytext^"\", ")), (!lex_result)); col := (!col) + String.size(yytext); Tokens.ID(yytext,!pos,!col));
 {all}     => (exc := false; col := (!col) + String.size(yytext); error (yytext,!pos, !col); lex());
 

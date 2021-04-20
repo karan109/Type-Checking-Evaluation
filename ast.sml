@@ -2,6 +2,7 @@ structure AST =
 struct
 
 type id = string
+exception EnvironmentLookupError;
 
 datatype binop = Plus | Minus | Times | And | Or | Xor | Equals | Implies | Greaterthan | Lessthan
 and
@@ -45,7 +46,7 @@ fun envAdd (var:id, v:value, []) = [(var,v)]
 fun envLookup (var:id, env:environment) =
     case List.find(fn (x, _) => x = var) env of
 	       SOME (x, v)   => v
-	    |   NONE => raise Fail "Environment lookup error"
+	    |   NONE => raise EnvironmentLookupError
 
 datatype statement = Function of function
 	| Expression of exp

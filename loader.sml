@@ -1,11 +1,11 @@
 CM.make("$/basis.cm");
 CM.make("$/ml-yacc-lib.cm");
+Control.Print.printLength := 100000;
+Control.Print.printDepth := 100000;
+Control.Print.stringDepth := 100000;
 use "ast.sml";
 use "evaluator.sml";
 use "exp.yacc.sig";
 use "exp.yacc.sml";
 use "exp.lex.sml";
 use "interface.sml";
-Control.Print.printLength := 1000;
-Control.Print.printDepth := 1000;
-Control.Print.stringDepth := 1000;
