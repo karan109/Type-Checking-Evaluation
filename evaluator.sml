@@ -3,7 +3,7 @@ struct
 open AST
 
 exception brokenTypes;
-
+val funcs = ref ([]:environment)
 fun checkTypes(t1 : typ, t2 : typ) = 
 	case(t1, t2) of
 		(Int, Int) => true
@@ -20,13 +20,35 @@ fun checkTypes(t1 : typ, t2 : typ) =
 			else false
 		| _ => false
 
-fun evalExp(e : exp, env : environment) = 
+fun getType(e : exp, env : environment) = 
+	case e of
+		NumExp n => Int
+		| StringExp s => raise brokenTypes
+		| BoolExp b => Bool
+		| Exp expression => getType(expression, env)
+		| VarExp x => (case envLookup (x, env) of
+			IntVal n => Int
+			| BoolVal b => Bool
+			| FunVal(arg, typ1, typ2, expression, env_temp) => typ2
+			| _ => 
+				(case envLookup (x, !funcs) of 
+					FunVal(arg, typ1, typ2, expression, env_temp) => typ2
+					| _ => raise brokenTypes) )
+		| BinExp (b, e1, e2) => getType(e1, env)
+		| UnExp (u, e) => getType(e, env)
+		| LetExp(ValDecl(x, e1), e2) => getType(e2, envAdd (x, evalExp (e1, env), env))
+		| IfThenElseExp(a1, a2, a3) => getType(a2, env)
+		| AppExp(var, expression) => getType(var, env)
+		| FnExp(arg, typ1, typ2, expression, env_temp) => typ2
+
+and
+evalExp(e : exp, env : environment) = 
 	case e of
 		NumExp n => IntVal n
 		| StringExp s => StringVal s
 		| BoolExp b => BoolVal b
 		| Exp expression => evalExp(expression, env)
-		| VarExp x => envLookup (x, env)
+		| VarExp x => (envLookup (x, env))
 		| BinExp (b, e1, e2) => evalBinExp(b, e1, e2, env)
 		| UnExp (u, e) => evalUnExp(u, e, env)
 		| LetExp(ValDecl(x, e1), e2) => evalExp(e2, envAdd (x, evalExp (e1, env), env))
@@ -62,15 +84,18 @@ evalUnExp(u : unop, e : exp, env : environment) =
 		| _ => raise brokenTypes
 and
 evalIfThenElseExp(a1 : exp, a2: exp, a3 : exp, env : environment) = 
-	case (evalExp(a1, env), evalExp(a2, env), evalExp(a3, env)) of
-		(BoolVal b, IntVal n1, IntVal n2) => if b then IntVal n1 else IntVal n2
-		| (BoolVal b, BoolVal b1, BoolVal b2) => if b then BoolVal b1 else BoolVal b2
-		| (BoolVal b, FunVal f1, FunVal f2) => if b then FunVal f1 else FunVal f2
+	case (evalExp(a1, env)) of
+		(BoolVal b) => 
+			if b = true andalso checkTypes(getType(a2, env), getType(a3, env)) = true 
+				then evalExp(a2, env) else evalExp(a3, env)
 		| _ => raise brokenTypes
 and
 evalAppExp(var : exp, a: exp, env : environment) = 
 	let 
-		val f = evalExp(var, env)
+		val temp = evalExp(var, env)
+		val f = 
+			case temp of StringVal w => envLookup(w, !funcs) 
+				| _ => temp
 		fun check() = 
 			case f of 
 				FunVal(arg, typ1, typ2, expression, env_fun) =>
@@ -84,7 +109,7 @@ evalAppExp(var : exp, a: exp, env : environment) =
 			case f of 
 				FunVal(VarExp(arg), typ1, typ2, expression, env_fun) =>
 					let 
-						val res = evalExp(expression, envAdd(arg, evalExp(a, env), env_fun))
+						val res = ( evalExp(expression, envAdd(arg, evalExp(a, env), env_fun)) )
 					in
 						(case res of
 							BoolVal b => if checkTypes(Bool, typ2) = false then raise brokenTypes else res
@@ -107,7 +132,7 @@ evalProgram(arg, env) =
 		Program(p, b) =>
 			(case p of Function(f) =>
 				(case f of Fun(VarExp(var) , bound , typ1 , typ2 , expression, env_fun) =>
-					evalFunc(f, env) :: evalProgram(b, envAdd(var, FunVal(bound , typ1 , typ2 , expression, env), env))
+					( funcs := envAdd(var, FunVal(bound , typ1 , typ2 , expression, envAdd(var, StringVal var, env)), !funcs) ;  evalFunc(f, env) :: evalProgram(b, envAdd(var, FunVal(bound , typ1 , typ2 , expression, envAdd(var, StringVal var, env)), env)) )
 				| _ => raise brokenTypes)
 			| Expression(e) =>
 				evalExp(e, env) :: evalProgram(b, env))
@@ -118,13 +143,19 @@ evalProgram(arg, env) =
 				| _ => raise brokenTypes)
 			| Expression(e) =>
 				[evalExp(e, env)] )
+and
+getRealExp(e) = 
+	case e of Exp(a) => getRealExp(a)
+		| _ => e
 
 fun evalResult([]) = ()
 	| evalResult(x::l) = 
 		case x of
-			BoolVal b1 => ( ( print ((Bool.toString b1)^", ") ) ; (evalResult l) )
-			| IntVal n1 => ( ( print ((Int.toString n1)^", ") ) ; (evalResult l) )
-			| FunVal (VarExp(bound) , typ1 , typ2 , expression, env) =>  ((print ("Fn ("^bound^"), ")) ; (evalResult l))
-			| StringVal s1 => ((print (s1^", ") ) ; (evalResult l))
+			BoolVal b1 => ( ( print ((Bool.toString b1)^"\n") ) ; (evalResult l) )
+			| IntVal n1 => ( ( print ((Int.toString n1)^"\n") ) ; (evalResult l) )
+			| FunVal (VarExp(bound) , typ1 , typ2 , expression, env) =>  ((print ("Fn ("^bound^")\n")) ; (evalResult l))
+			| StringVal s1 => ((print (s1^"\n") ) ; (evalResult l))
 			| _ => raise brokenTypes
+
+fun printResult(l : value list) = (print("\nResult:\n\n"); evalResult(l); print("\n"))
 end

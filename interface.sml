@@ -32,5 +32,4 @@ fun parse (lexer) =
 val file_name = TextIO.openIn ("input.txt");
 val input_str = TextIO.inputAll file_name;
 val ast = (parse o stringToLexer) (input_str);
-val result = EVALUATOR.evalProgram(ast, []);
-EVALUATOR.evalResult(EVALUATOR.evalProgram(ast, []));
+EVALUATOR.printResult(EVALUATOR.evalProgram(ast, []));
