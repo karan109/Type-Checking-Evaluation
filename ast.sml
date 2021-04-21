@@ -38,15 +38,19 @@ and
 	
 type environment = (id * value) list
 
-fun envAdd (var:id, v:value, []) = [(var,v)]
-	| envAdd (var:id, v:value, (x, y)::ls) = 
+fun envAdd (var, v, []) = [(var,v)]
+	| envAdd (var, v, (x, y)::ls) = 
 		if x = var then (var, v)::ls
 		else (x, y)::envAdd (var, v, ls)
 
-fun envLookup (var:id, env:environment) =
+fun envLookup (var, env) =
     case List.find(fn (x, _) => x = var) env of
 	       SOME (x, v)   => v
 	    |   NONE => raise EnvironmentLookupError
+fun isInEnv(var, env) = 
+	case List.find(fn (x, _) => x = var) env of
+	       SOME (x, v)   => true
+	    |   NONE => false
 
 datatype statement = Function of function
 	| Expression of exp

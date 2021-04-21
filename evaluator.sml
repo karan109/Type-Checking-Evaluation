@@ -20,27 +20,68 @@ fun checkTypes(t1 : typ, t2 : typ) =
 			else false
 		| _ => false
 
-fun getType(e : exp, env : environment) = 
+fun getType(e : exp, env : environment, bound: (string * typ) list):typ = 
 	case e of
 		NumExp n => Int
 		| StringExp s => raise brokenTypes
 		| BoolExp b => Bool
-		| Exp expression => getType(expression, env)
-		| VarExp x => (case envLookup (x, env) of
-			IntVal n => Int
-			| BoolVal b => Bool
-			| FunVal(arg, typ1, typ2, expression, env_temp) => typ2
-			| _ => 
-				(case envLookup (x, !funcs) of 
-					FunVal(arg, typ1, typ2, expression, env_temp) => typ2
-					| _ => raise brokenTypes) )
-		| BinExp (b, e1, e2) => getType(e1, env)
-		| UnExp (u, e) => getType(e, env)
-		| LetExp(ValDecl(x, e1), e2) => getType(e2, envAdd (x, evalExp (e1, env), env))
-		| IfThenElseExp(a1, a2, a3) => getType(a2, env)
-		| AppExp(var, expression) => getType(var, env)
-		| FnExp(arg, typ1, typ2, expression, env_temp) => typ2
+		| Exp expression => getType(expression, env, bound)
+		| VarExp x => 
+			if isInEnv(x, env) then
+				(case envLookup (x, env) of
+					IntVal n => Int
+					| BoolVal b => Bool
+					| FunVal(VarExp arg, typ1, typ2, expression, env_temp) => 
+						if getType(expression, env_temp, envAdd(arg, typ1, bound)) = typ2 then typ2
+						else raise brokenTypes
+					| _ => 
+						(case envLookup (x, !funcs) of 
+							FunVal(VarExp arg, typ1, typ2, expression, env_temp) =>
+								if getType(expression, env_temp, envAdd(arg, typ1, bound)) = typ2 then typ2
+								else raise brokenTypes
+							| _ => raise brokenTypes) )
+			else envLookup(x, bound)
+		| BinExp (b, e1, e2) => 
+			let val t1 = getType(e1, env, bound)
+				val t2 = getType(e2, env, bound)
+			in
+				if t1 = t2 then
+					(case (b, t1) of
+						(Plus, Int) => t1
+						| (Minus, Int) => t1
+						| (Times, Int) => t1
+						| (Greaterthan, Int) => t1
+						| (Lessthan, Int) => t1
+						| (And, Bool) => t1
+						| (Or, Bool) => t1
+						| (Implies, Bool) => t1
+						| (Equals, Bool) => t1
+						| (Xor, Bool) => t1
+						| _ => raise brokenTypes)
+				else raise brokenTypes
+			end
 
+		| UnExp (u, e) => 
+			(case (u, getType(e, env, bound)) of
+				(Not, Bool) => Bool
+				| (Negate, Int) => Int
+				| _ => raise brokenTypes)
+		| LetExp(ValDecl(x, e1), e2) => 
+			getType(e2, env, envAdd(x, getType(e1, env, bound), bound))
+		| IfThenElseExp(a1, a2, a3) => 
+			let val t1 = getType(a2, env, bound)
+			in
+				if getType(a1, env, bound) = Bool andalso t1 = getType(a3, env, bound) then t1
+				else raise brokenTypes
+			end
+		| AppExp(var, expression) => getType(var, env, bound)
+		| FnExp(VarExp arg, typ1, typ2, expression, env_temp) => 
+			if getType(expression, env_temp, envAdd(arg, typ1, bound)) = typ2 then typ2
+			else raise brokenTypes
+and
+functionTypeCheck(x, typ, e, env, return_typ) = 
+	if getType(e, env, [(x, typ)]) = return_typ then true
+	else raise brokenTypes
 and
 evalExp(e : exp, env : environment) = 
 	case e of
@@ -86,7 +127,7 @@ and
 evalIfThenElseExp(a1 : exp, a2: exp, a3 : exp, env : environment) = 
 	case (evalExp(a1, env)) of
 		(BoolVal b) => 
-			if b = true andalso checkTypes(getType(a2, env), getType(a3, env)) = true 
+			if b = true andalso checkTypes(getType(a2, env, []), getType(a3, env, [])) = true 
 				then evalExp(a2, env) else evalExp(a3, env)
 		| _ => raise brokenTypes
 and
