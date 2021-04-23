@@ -224,14 +224,14 @@ and
 getRealType(t) = 
 	case t of Type t1 => getRealType(t1)
 		| _ => t
-fun evalResult([]) = ()
-	| evalResult(x::l) = 
+fun evalResult([], ct) = ()
+	| evalResult(x::l, ct) = 
 		case x of
-			BoolVal b1 => ( ( print ((Bool.toString b1)^"\n") ) ; (evalResult l) )
-			| IntVal n1 => ( ( print ((Int.toString n1)^"\n") ) ; (evalResult l) )
-			| FunVal (VarExp(bound) , typ1 , typ2 , expression, env) =>  ((print ("Fn ("^bound^")\n")) ; (evalResult l))
-			| StringVal s1 => ((print (s1^"\n") ) ; (evalResult l))
+			BoolVal b1 => ( ( print("Statement "^Int.toString(ct)^": "); print ((Bool.toString b1)^"\n") ) ; (evalResult(l, ct+1)) )
+			| IntVal n1 => ( (print("Statement "^Int.toString(ct)^": "); print ((Int.toString n1)^"\n") ) ; (evalResult(l, ct+1)) )
+			| FunVal (VarExp(bound) , typ1 , typ2 , expression, env) =>  ((print("Statement "^Int.toString(ct)^": "); print ("Fn ("^bound^")\n")) ; (evalResult(l, ct+1)))
+			| StringVal s1 => ((print("Statement "^Int.toString(ct)^": "); print (s1^"\n") ) ; (evalResult(l, ct+1)))
 			| _ => raise brokenTypes
 
-fun printResult(l : value list) = (print("\nResult:\n\n"); evalResult(l); print("\n"))
+fun printResult(l : value list) = (print("\nResult:\n\n"); evalResult(l, 1); print("\n"))
 end
