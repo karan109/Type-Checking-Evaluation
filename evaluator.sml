@@ -117,7 +117,9 @@ evalExp(e : exp, env : environment) =
 		| LetExp(ValDecl(x, e1), e2) => evalExp(e2, envAdd (x, evalExp (e1, env), env))
 		| IfThenElseExp(a1, a2, a3) => evalIfThenElseExp(a1, a2, a3, env)
 		| AppExp(var, expression) => evalAppExp(var, expression, env)
-		| FnExp(arg, typ1, typ2, expression, env_temp) => if checkTypes(getTypeFun(FnExp(arg, typ1, typ2, expression, env), env, []), BinType(typ1, typ2)) = true then FunVal(arg, typ1, typ2, expression, env)
+		| FnExp(arg, typ1, typ2, expression, env_temp) => 
+			if checkTypes(getTypeFun(FnExp(arg, typ1, typ2, expression, env), env, []), BinType(typ1, typ2)) = true then 
+				FunVal(arg, typ1, typ2, expression, env)
 		else raise brokenTypes 
 and
 evalBinExp(b : binop, e1 : exp, e2 : exp, env : environment) = 

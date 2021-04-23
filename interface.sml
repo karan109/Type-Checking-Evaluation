@@ -33,4 +33,6 @@ fun parse (lexer) =
     end
 
 val ast = (parse o stringToLexer) (TextIO.inputAll (TextIO.openIn ( "input.txt"(*head(CommandLine.arguments())*) )));
+print("\n\nAST: \n\n");
+AST.programToString(ast, 0);
 EVALUATOR.printResult(EVALUATOR.evalProgram(ast, []));
