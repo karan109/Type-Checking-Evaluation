@@ -237,5 +237,5 @@ fun evalResult([], ct) = ()
 			| StringVal s1 => ((print("Statement "^Int.toString(ct)^": "); print (s1^"\n") ) ; (evalResult(l, ct+1)))
 			| _ => raise brokenTypes
 
-fun printResult(l : value list) = (print("\nResult:\n\n"); evalResult(l, 1); print("\n"))
+fun printResult(l : value list) = (print("\n\nResult:\n\n"); evalResult(l, 1); print("\n"))
 end
