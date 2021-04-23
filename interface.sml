@@ -36,7 +36,7 @@ fun parse (lexer) =
 
 val ast = 
     let 
-        val str = (TextIO.inputAll (TextIO.openIn ( "input.txt"(*head(CommandLine.arguments())*) )))
+        val str = (TextIO.inputAll (TextIO.openIn ( (*"input.txt"*)head(CommandLine.arguments()) )))
     in
         if str = "" then raise emptyFile
         else (parse o stringToLexer) (str)

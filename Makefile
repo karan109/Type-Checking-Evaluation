@@ -1,7 +1,7 @@
 all:
 	ml-yacc exp.yacc
 	ml-lex exp.lex
-	sml < loader.sml input.txt
+	sml loader.sml input.txt
 
 exec:
 	mlyacc exp.yacc

@@ -94,7 +94,7 @@ and
 DeclToString(dec, ct) = 
 	( indent(ct); 
 	case dec of
-		ValDecl(s, e) => ( print("ValDecl(\n"); indent(ct+1); print(s); print(",\n"); ExpressionToString(e, ct+1); print(")") )
+		ValDecl(s, e) => ( print("ValDecl(\n"); indent(ct+1); print("\""); print(s); print("\""); print(",\n"); ExpressionToString(e, ct+1); print(")") )
 	)
 and
 TypeToString(t, ct) = 
