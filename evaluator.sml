@@ -39,7 +39,8 @@ fun getTypeFun(e : exp, env : environment, bound: (string * typ) list):typ =
 					| _ => 
 						(case envLookup (x, !funcs) of 
 							FunVal(VarExp arg, typ1, typ2, expression, env_temp) => BinType(typ1, typ2)
-						 ) )
+							| _ => raise brokenTypes )
+				)
 		| BinExp (b, e1, e2) => 
 			let val t1 = getTypeFun(e1, env, bound)
 				val t2 = getTypeFun(e2, env, bound)
@@ -81,6 +82,7 @@ fun getTypeFun(e : exp, env : environment, bound: (string * typ) list):typ =
 		| FnExp(VarExp arg, typ1, typ2, expression, env_temp) => 
 			if checkTypes(getTypeFun(expression, env_temp, envAdd(arg, typ1, bound)), typ2) = true then BinType(typ1, typ2)
 			else raise brokenTypes
+		| _ => raise brokenTypes
 and
 getType(e : exp, env : environment) = 
 	case e of

@@ -29,7 +29,7 @@ structure Tokens= Tokens
 	  		if (!exc) = false andalso length(ls) > 1 then String.implode( rev( #"\n"::(#"\n"::(#"]"::tail( tail( !lex_result) ) ) ) ) )
 	  		else ""
 
-	val eof = fn () => (print(process(!lex_result)); Tokens.EOF(!pos, !col))
+	val eof = fn () => ((*print(process(!lex_result));*) Tokens.EOF(!pos, !col))
 	val error = fn (e, l:int, col:int) => print("Unknown Token:" ^ (Int.toString l) ^ ":" ^ (Int.toString col) ^ ":" ^ e ^ "\n\n")
 
 	

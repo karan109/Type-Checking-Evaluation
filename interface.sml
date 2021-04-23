@@ -4,7 +4,10 @@ structure CalcParser =
 	  Join(structure LrParser = LrParser
      	       structure ParserData = CalcLrVals.ParserData
      	       structure Lex = CalcLex)
-     
+
+fun head([]) = ""
+    | head((x:string)::ls) = x
+
 fun invoke lexstream =
     	     	let fun print_error (s,pos:int,col:int) =
                     print("Syntax Error:" ^ (Int.toString pos) ^ ":" ^ (Int.toString col) ^ ":" ^ s ^ "\n\n")
@@ -29,7 +32,5 @@ fun parse (lexer) =
         else result
     end
 
-val file_name = TextIO.openIn ("input.txt");
-val input_str = TextIO.inputAll file_name;
-val ast = (parse o stringToLexer) (input_str);
+val ast = (parse o stringToLexer) (TextIO.inputAll (TextIO.openIn ( "input.txt"(*head(CommandLine.arguments())*) )));
 EVALUATOR.printResult(EVALUATOR.evalProgram(ast, []));
