@@ -45,11 +45,12 @@ fun envAdd (var, v, []) = [(var,v)]
 
 fun envLookup (var, env) =
     case List.find(fn (x, _) => x = var) env of
-	       SOME (x, v)   => v
+	       SOME (x, v) => v 
 	    |   NONE => raise EnvironmentLookupError
+
 fun isInEnv(var, env) = 
 	case List.find(fn (x, _) => x = var) env of
-	       SOME (x, v)   => true
+	       SOME (x, v) => true
 	    |   NONE => false
 
 datatype statement = Function of function
