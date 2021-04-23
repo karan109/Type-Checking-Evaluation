@@ -1,12 +1,12 @@
 all:
-	ml-yacc exp.yacc
-	ml-lex exp.lex
-	sml loader.sml input.txt
-
-exec:
 	mlyacc exp.yacc
 	mllex exp.lex
 	mlton a3.mlb
+
+interpret:
+	ml-yacc exp.yacc
+	ml-lex exp.lex
+	sml loader.sml input.txt
 
 run:
 	./a3 input.txt

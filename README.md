@@ -4,7 +4,7 @@
 
 ## Build executable
 ```bash
-make exec
+make
 ```
 This builds the executable ./a3
 
