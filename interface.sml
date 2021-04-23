@@ -5,6 +5,8 @@ structure CalcParser =
      	       structure ParserData = CalcLrVals.ParserData
      	       structure Lex = CalcLex)
 
+exception emptyFile;
+
 fun head([]) = ""
     | head((x:string)::ls) = x
 
@@ -32,7 +34,13 @@ fun parse (lexer) =
         else result
     end
 
-val ast = (parse o stringToLexer) (TextIO.inputAll (TextIO.openIn ( "input.txt"(*head(CommandLine.arguments())*) )));
+val ast = 
+    let 
+        val str = (TextIO.inputAll (TextIO.openIn ( "input.txt"(*head(CommandLine.arguments())*) )))
+    in
+        if str = "" then raise emptyFile
+        else (parse o stringToLexer) (str)
+    end;
 print("\n\nAST: \n\n");
 AST.programToString(ast, 0);
 EVALUATOR.printResult(EVALUATOR.evalProgram(ast, []));
