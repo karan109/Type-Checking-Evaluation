@@ -192,7 +192,7 @@ evalAppExp(var : exp, a: exp, env : environment) =
 and
 evalFunc(f : exp, env : environment) = 
 	(case f of FnExp(VarExp arg, typ1, typ2, expression, env_temp) => 
-		if checkTypes(getTypeFun(f, env_temp, []), BinType(typ1, typ2)) = true then StringVal "Function Definition"
+		if checkTypes(getTypeFun(f, env_temp, []), BinType(typ1, typ2)) = true then StringVal ("Function ("^arg^": "^typtostr(typ1)^" ): "^typtostr(typ2))
 		else raise brokenTypes
 	| _ => raise brokenTypes)
 and
@@ -223,7 +223,7 @@ typtostr(t) =
 	case t of Int => "Int"
 		| Bool => "Bool"
 		| Type t => typtostr(t)
-		| BinType(t1, t2) => "("^typtostr(t1)^")->("^typtostr(t2)^")"
+		| BinType(t1, t2) => "("^typtostr(t1)^") -> ("^typtostr(t2)^")"
 and
 getRealType(t) = 
 	case t of Type t1 => getRealType(t1)
@@ -233,7 +233,7 @@ fun evalResult([], ct) = ()
 		case x of
 			BoolVal b1 => ( ( print("Statement "^Int.toString(ct)^": "); print ((Bool.toString b1)^"\n") ) ; (evalResult(l, ct+1)) )
 			| IntVal n1 => ( (print("Statement "^Int.toString(ct)^": "); print ((Int.toString n1)^"\n") ) ; (evalResult(l, ct+1)) )
-			| FunVal (VarExp(bound) , typ1 , typ2 , expression, env) =>  ((print("Statement "^Int.toString(ct)^": "); print ("Fn ("^bound^")\n")) ; (evalResult(l, ct+1)))
+			| FunVal (VarExp(bound) , typ1 , typ2 , expression, env) =>  ((print("Statement "^Int.toString(ct)^": "); print ("Fn ("^bound^": "^typtostr(typ1)^" ): "^typtostr(typ2)^"\n")) ; (evalResult(l, ct+1)))
 			| StringVal s1 => ((print("Statement "^Int.toString(ct)^": "); print (s1^"\n") ) ; (evalResult(l, ct+1)))
 			| _ => raise brokenTypes
 

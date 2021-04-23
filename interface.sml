@@ -43,4 +43,5 @@ val ast =
     end;
 print("\n\nAST: \n\n");
 AST.programToString(ast, 0);
+print("\n\n");
 EVALUATOR.printResult(EVALUATOR.evalProgram(ast, []));
