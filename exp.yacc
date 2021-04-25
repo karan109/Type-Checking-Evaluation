@@ -25,7 +25,7 @@
 %left AND OR XOR EQUALS
 %left LESSTHAN GREATERTHAN
 %left PLUS MINUS
-%right TIMES
+%left TIMES
 %right NEGATE NOT
 %left TERM
 %nonassoc ASSIGN
