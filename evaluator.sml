@@ -18,9 +18,9 @@ fun checkTypes(t1 : typ, t2 : typ) =
 		| (BinType (t3, t4), BinType(t5, t6)) =>
 			if checkTypes(t3, t5) andalso checkTypes(t4, t6) then true
 			else false
-		| _ => false
-
-fun getTypeFun(e : exp, env : environment, bound: (string * typ) list):typ = 
+		| _ => ((*print("Types "^typtostr(t1)^", "^typtostr(t2)^" not equal.\n");*) false)
+and
+getTypeFun(e : exp, env : environment, bound: (string * typ) list):typ = 
 	case e of
 		NumExp n => Int
 		| StringExp s => raise brokenTypes
@@ -39,7 +39,7 @@ fun getTypeFun(e : exp, env : environment, bound: (string * typ) list):typ =
 					| _ => 
 						(case envLookup (x, !funcs) of 
 							FunVal(VarExp arg, typ1, typ2, expression, env_temp) => BinType(typ1, typ2)
-							| _ => raise brokenTypes )
+							| _ => (print("Invalid use of variable "^x^" (not present in scope or not a function).\n"); raise brokenTypes) )
 				)
 		| BinExp (b, e1, e2) => 
 			let val t1 = getTypeFun(e1, env, bound)
@@ -59,29 +59,29 @@ fun getTypeFun(e : exp, env : environment, bound: (string * typ) list):typ =
 						| (Equals, Bool) => Bool
 						| (Xor, Bool) => t1
 						| _ => raise brokenTypes)
-				else raise brokenTypes
+				else (print("Found incorrect types "^typtostr(t1)^", "^typtostr(t2)^" with "^BinToString(b)^".\n"); raise brokenTypes)
 			end
 
 		| UnExp (u, e) => 
 			(case (u, getRealType(getTypeFun(e, env, bound))) of
 				(Not, Bool) => Bool
 				| (Negate, Int) => Int
-				| _ => raise brokenTypes)
+				| _ => (print("Found incorrect type "^typtostr(getRealType(getTypeFun(e, env, bound)))^" with "^UnToString(u)^".\n"); raise brokenTypes))
 		| LetExp(ValDecl(x, e1), e2) => 
 			getTypeFun(e2, env, envAdd(x, getTypeFun(e1, env, bound), bound))
 		| IfThenElseExp(a1, a2, a3) => 
 			let val t1 = getTypeFun(a2, env, bound)
 			in
 				if checkTypes(getTypeFun(a1, env, bound), Bool) = true andalso checkTypes(t1, getTypeFun(a3, env, bound)) = true then t1
-				else raise brokenTypes
+				else (print("Either found incorrect types "^typtostr(t1)^", "^typtostr(getTypeFun(a3, env, bound))^" with "^"If-Then-Else-Fi or "^typtostr(getTypeFun(a1, env, bound))^" is not Bool.\n"); raise brokenTypes)
 			end
 		| AppExp(var, expression) => 
 			(case getRealType(getTypeFun(var, env, bound)) of
-				BinType(t1, t2) => if checkTypes(getTypeFun(expression, env, bound), t1) = true then t2 else raise brokenTypes
-				| _ => raise brokenTypes)
+				BinType(t1, t2) => if checkTypes(getTypeFun(expression, env, bound), t1) = true then t2 else (print("Incorrect type of argument given to function. Expected "^typtostr(t1)^", got "^typtostr(getTypeFun(expression, env, bound))^".\n"); raise brokenTypes)
+				| _ => (print("Incorrect type of argument given to function.\n"); raise brokenTypes))
 		| FnExp(VarExp arg, typ1, typ2, expression, env_temp) => 
 			if checkTypes(getTypeFun(expression, env_temp, envAdd(arg, typ1, bound)), typ2) = true then BinType(typ1, typ2)
-			else raise brokenTypes
+			else (print("Incorrect return type of function. Expected "^typtostr(typ2)^", got "^typtostr(getTypeFun(expression, env_temp, envAdd(arg, typ1, bound)))^".\n"); raise brokenTypes)
 		| _ => raise brokenTypes
 and
 getType(e : exp, env : environment) = 
@@ -97,7 +97,7 @@ getType(e : exp, env : environment) =
 			| _ => 
 				(case envLookup (x, !funcs) of 
 					FunVal(arg, typ1, typ2, expression, env_temp) => typ2
-					| _ => raise brokenTypes) )
+					| _ => (print("Invalid use of variable "^x^" (not present in scope or not a function).\n"); raise brokenTypes)) )
 		| BinExp (b, e1, e2) => getType(e1, env)
 		| UnExp (u, e) => getType(e, env)
 		| LetExp(ValDecl(x, e1), e2) => getType(e2, envAdd (x, evalExp (e1, env), env))
@@ -140,21 +140,21 @@ evalBinExp(b : binop, e1 : exp, e2 : exp, env : environment) =
 		| (Equals, IntVal n1, IntVal n2) => BoolVal (n1 = n2)
 		| (Greaterthan, IntVal n1, IntVal n2) => BoolVal (n1 > n2)
 		| (Lessthan, IntVal n1, IntVal n2) => BoolVal (n1 < n2)
-		| _ => raise brokenTypes
+		| _ => (print("Found incorrect types "^typtostr(getTypeFun(e1, env, []))^", "^typtostr(getTypeFun(e2, env, []))^" with "^BinToString(b)^".\n"); raise brokenTypes)
 and
 evalUnExp(u : unop, e : exp, env : environment) = 
 	case (u, evalExp(e, env)) of
 		(Negate, IntVal n) => IntVal (0-n)
 		| (Not, BoolVal b) => 
 			if b = true then BoolVal (false) else BoolVal (true)
-		| _ => raise brokenTypes
+		| _ => (print("Found incorrect type "^typtostr(getTypeFun(e, env, []))^" with "^UnToString(u)^".\n"); raise brokenTypes)
 and
 evalIfThenElseExp(a1 : exp, a2: exp, a3 : exp, env : environment) = 
 	case (evalExp(a1, env)) of
 		(BoolVal b) => 
 			if b = true andalso checkTypes(getType(a2, env), getType(a3, env)) = true 
 				then evalExp(a2, env) else evalExp(a3, env)
-		| _ => raise brokenTypes
+		| _ => (print("Either found incorrect types "^typtostr(getTypeFun(a2, env, []))^", "^typtostr(getTypeFun(a3, env, []))^" with "^"If-Then-Else-Fi or "^typtostr(getTypeFun(a1, env, []))^" is not Bool.\n"); raise brokenTypes)
 and
 evalAppExp(var : exp, a: exp, env : environment) = 
 	let 
@@ -170,7 +170,7 @@ evalAppExp(var : exp, a: exp, env : environment) =
 						| BoolVal b1 => checkTypes(Bool, typ1)
 						| FunVal (arg_temp, typ1_temp, typ2_temp, expression_temp, env_temp) => checkTypes(BinType(typ1_temp, typ2_temp), typ1)
 						| _ => raise brokenTypes )
-				| _ => raise brokenTypes
+				| _ => (print("Function application to non-function.\n"); raise brokenTypes)
 		fun eval() = 
 			case f of 
 				FunVal(VarExp(arg), typ1, typ2, expression, env_fun) =>
@@ -178,23 +178,23 @@ evalAppExp(var : exp, a: exp, env : environment) =
 						val res = ( evalExp(expression, envAdd(arg, evalExp(a, env), env_fun)) )
 					in
 						(case res of
-							BoolVal b => if checkTypes(Bool, typ2) = false then raise brokenTypes else res
-							| IntVal n => if checkTypes(Int, typ2) = false then raise brokenTypes else res
+							BoolVal b => if checkTypes(Bool, typ2) = false then (print("Incorrect return type of function. Expected "^typtostr(typ2)^", got Bool.\n"); raise brokenTypes) else res
+							| IntVal n => if checkTypes(Int, typ2) = false then (print("Incorrect return type of function. Expected "^typtostr(typ2)^", got Int.\n"); raise brokenTypes) else res
 							| FunVal (arg_temp, typ1_temp, typ2_temp, expression_temp, env_temp) => 
-								if checkTypes(BinType(typ1_temp, typ2_temp), typ2) = false then raise brokenTypes else res
+								if checkTypes(BinType(typ1_temp, typ2_temp), typ2) = false then (print("Incorrect return type of function. Expected "^typtostr(typ2)^", got "^typtostr(BinType(typ1_temp, typ2_temp))^".\n"); raise brokenTypes) else res
 							| _ => raise brokenTypes )
 					end
 				| _ => raise brokenTypes
 		in
 			if check() then eval()
-			else raise brokenTypes
+			else (print("Incorrect type of argument given to function.\n"); raise brokenTypes)
 		end
 and
 evalFunc(f : exp, env : environment) = 
 	(case f of FnExp(VarExp arg, typ1, typ2, expression, env_temp) => 
 		if checkTypes(getTypeFun(f, env_temp, []), BinType(typ1, typ2)) = true then StringVal ("Function ("^arg^": "^typtostr(typ1)^" ): "^typtostr(typ2))
-		else raise brokenTypes
-	| _ => raise brokenTypes)
+		else (print("Incorrect function signature at "^arg^". Expected "^typtostr(BinType(typ1, typ2))^", got "^typtostr(getTypeFun(f, env_temp, []))^".\n"); raise brokenTypes)
+	| _ => ( raise brokenTypes))
 and
 evalProgram(arg, env) = 
 	case arg of
@@ -228,6 +228,24 @@ and
 getRealType(t) = 
 	case t of Type t1 => getRealType(t1)
 		| _ => t
+and
+BinToString(oper) = 
+	case oper of
+		Plus => "Plus"
+		| Minus => "Minus"
+		| Times => "Times"
+		| And => "And"
+		| Or => "Or"
+		| Xor => "Xor"
+		| Equals => "Equals"
+		| Implies => "Implies"
+		| Lessthan => "Lessthan"
+		| Greaterthan => "Greaterthan"
+and
+UnToString(oper) = 
+	case oper of
+		Not => "Not"
+		| Negate => "Negate"
 fun evalResult([], ct) = ()
 	| evalResult(x::l, ct) = 
 		case x of

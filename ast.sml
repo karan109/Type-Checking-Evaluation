@@ -46,7 +46,7 @@ fun envAdd (var, v, []) = [(var,v)]
 fun envLookup (var, env) =
     case List.find(fn (x, _) => x = var) env of
 	       SOME (x, v) => v 
-	    |   NONE => raise EnvironmentLookupError
+	    |   NONE => (print("Variable "^var^" not in correct scope.\n"); raise EnvironmentLookupError)
 
 fun isInEnv(var, env) = 
 	case List.find(fn (x, _) => x = var) env of
