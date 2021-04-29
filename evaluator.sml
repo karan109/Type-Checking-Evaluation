@@ -33,12 +33,12 @@ getTypeFun(e : exp, env : environment, bound: (string * typ) list):typ =
 				(case envLookup (x, env) of
 					IntVal n => Int
 					| BoolVal b => Bool
-					| FunVal(VarExp arg, typ1, typ2, expression, env_temp) => 
+					| FunVal(VarExp arg, typ1, typ2, expression, env_temp, name) => 
 						if checkTypes(getTypeFun(expression, env_temp, envAdd(arg, typ1, bound)), typ2) then BinType(typ1, typ2)
 						else raise brokenTypes
 					| _ => 
 						(case envLookup (x, !funcs) of 
-							FunVal(VarExp arg, typ1, typ2, expression, env_temp) => BinType(typ1, typ2)
+							FunVal(VarExp arg, typ1, typ2, expression, env_temp, name) => BinType(typ1, typ2)
 							| _ => (print("Invalid use of variable "^x^" (not present in scope or not a function).\n"); raise brokenTypes) )
 				)
 		| BinExp (b, e1, e2) => 
@@ -77,11 +77,16 @@ getTypeFun(e : exp, env : environment, bound: (string * typ) list):typ =
 			end
 		| AppExp(var, expression) => 
 			(case getRealType(getTypeFun(var, env, bound)) of
-				BinType(t1, t2) => if checkTypes(getTypeFun(expression, env, bound), t1) = true then t2 else (print("Incorrect type of argument given to function. Expected "^typtostr(t1)^", got "^typtostr(getTypeFun(expression, env, bound))^".\n"); raise brokenTypes)
-				| _ => (print("Incorrect type of argument given to function.\n"); raise brokenTypes))
-		| FnExp(VarExp arg, typ1, typ2, expression, env_temp) => 
+				BinType(t1, t2) => if checkTypes(getTypeFun(expression, env, bound), t1) = true then t2 else 
+					(case getRealExp(var) of VarExp x => (print("Incorrect type of actual parameter given to function "^x^". Expected "^typtostr(t1)^", got "^typtostr(getTypeFun(expression, env, bound))^".\n"); raise brokenTypes)
+						| FnExp(VarExp arg, typ1, typ2, expression, env_temp, name) => (print("Incorrect type of actual parameter given to function "^name^". Expected "^typtostr(t1)^", got "^typtostr(getTypeFun(expression, env, bound))^".\n"); raise brokenTypes) 
+						| _ => (print("Incorrect type of actual parameter given to function. Expected "^typtostr(t1)^", got "^typtostr(getTypeFun(expression, env, bound))^".\n"); raise brokenTypes) )
+				| _ => 
+					(case getRealExp(var) of VarExp x => (print("Function application to non-function "^x^".\n"); raise brokenTypes)
+						| _ => (print("Function application to non-function.\n"); raise brokenTypes) ) )
+		| FnExp(VarExp arg, typ1, typ2, expression, env_temp, name) => 
 			if checkTypes(getTypeFun(expression, env_temp, envAdd(arg, typ1, bound)), typ2) = true then BinType(typ1, typ2)
-			else (print("Incorrect return type of function. Expected "^typtostr(typ2)^", got "^typtostr(getTypeFun(expression, env_temp, envAdd(arg, typ1, bound)))^".\n"); raise brokenTypes)
+			else (print("Incorrect return type of function "^name^". Expected "^typtostr(typ2)^", got "^typtostr(getTypeFun(expression, env_temp, envAdd(arg, typ1, bound)))^".\n"); raise brokenTypes)
 		| _ => raise brokenTypes
 and
 getType(e : exp, env : environment) = 
@@ -93,17 +98,17 @@ getType(e : exp, env : environment) =
 		| VarExp x => (case envLookup (x, env) of
 			IntVal n => Int
 			| BoolVal b => Bool
-			| FunVal(arg, typ1, typ2, expression, env_temp) => typ2
+			| FunVal(arg, typ1, typ2, expression, env_temp, name) => typ2
 			| _ => 
 				(case envLookup (x, !funcs) of 
-					FunVal(arg, typ1, typ2, expression, env_temp) => typ2
+					FunVal(arg, typ1, typ2, expression, env_temp, name) => typ2
 					| _ => (print("Invalid use of variable "^x^" (not present in scope or not a function).\n"); raise brokenTypes)) )
 		| BinExp (b, e1, e2) => getType(e1, env)
 		| UnExp (u, e) => getType(e, env)
 		| LetExp(ValDecl(x, e1), e2) => getType(e2, envAdd (x, evalExp (e1, env), env))
 		| IfThenElseExp(a1, a2, a3) => getType(a2, env)
 		| AppExp(var, expression) => getType(var, env)
-		| FnExp(arg, typ1, typ2, expression, env_temp) => typ2
+		| FnExp(arg, typ1, typ2, expression, env_temp, name) => typ2
 and
 evalExp(e : exp, env : environment) = 
 	case e of
@@ -117,9 +122,9 @@ evalExp(e : exp, env : environment) =
 		| LetExp(ValDecl(x, e1), e2) => evalExp(e2, envAdd (x, evalExp (e1, env), env))
 		| IfThenElseExp(a1, a2, a3) => evalIfThenElseExp(a1, a2, a3, env)
 		| AppExp(var, expression) => evalAppExp(var, expression, env)
-		| FnExp(arg, typ1, typ2, expression, env_temp) => 
-			if checkTypes(getTypeFun(FnExp(arg, typ1, typ2, expression, env), env, []), BinType(typ1, typ2)) = true then 
-				FunVal(arg, typ1, typ2, expression, env)
+		| FnExp(arg, typ1, typ2, expression, env_temp, name) => 
+			if checkTypes(getTypeFun(FnExp(arg, typ1, typ2, expression, env, name), env, []), BinType(typ1, typ2)) = true then 
+				FunVal(arg, typ1, typ2, expression, env, name)
 		else raise brokenTypes 
 and
 evalBinExp(b : binop, e1 : exp, e2 : exp, env : environment) = 
@@ -164,36 +169,43 @@ evalAppExp(var : exp, a: exp, env : environment) =
 				| _ => temp
 		fun check() = 
 			case f of 
-				FunVal(arg, typ1, typ2, expression, env_fun) =>
+				FunVal(arg, typ1, typ2, expression, env_fun, name) =>
 					(case evalExp(a, env) of
-						IntVal n1 => checkTypes(Int, typ1)
-						| BoolVal b1 => checkTypes(Bool, typ1)
-						| FunVal (arg_temp, typ1_temp, typ2_temp, expression_temp, env_temp) => checkTypes(BinType(typ1_temp, typ2_temp), typ1)
+						IntVal n1 => if checkTypes(Int, typ1) then true else 
+							(print("Incorrect type of actual parameter given to function "^name^". Expected "^typtostr(typ1)^", got "^typtostr(Int)^".\n"); raise brokenTypes)
+						| BoolVal b1 => if checkTypes(Bool, typ1) then true else
+							(print("Incorrect type of actual parameter given to function "^name^". Expected "^typtostr(typ1)^", got "^typtostr(Bool)^".\n"); raise brokenTypes)
+						| FunVal (arg_temp, typ1_temp, typ2_temp, expression_temp, env_temp, name_temp) => 
+							if checkTypes(BinType(typ1_temp, typ2_temp), typ1) then true
+							else (print("Incorrect type of actual parameter given to function "^name^". Expected "^typtostr(typ1)^", got "^typtostr(BinType(typ1_temp, typ2_temp))^".\n"); raise brokenTypes)
 						| _ => raise brokenTypes )
 				| _ => (print("Function application to non-function.\n"); raise brokenTypes)
 		fun eval() = 
 			case f of 
-				FunVal(VarExp(arg), typ1, typ2, expression, env_fun) =>
+				FunVal(VarExp(arg), typ1, typ2, expression, env_fun, name) =>
 					let 
 						val res = ( evalExp(expression, envAdd(arg, evalExp(a, env), env_fun)) )
 					in
 						(case res of
-							BoolVal b => if checkTypes(Bool, typ2) = false then (print("Incorrect return type of function. Expected "^typtostr(typ2)^", got Bool.\n"); raise brokenTypes) else res
-							| IntVal n => if checkTypes(Int, typ2) = false then (print("Incorrect return type of function. Expected "^typtostr(typ2)^", got Int.\n"); raise brokenTypes) else res
-							| FunVal (arg_temp, typ1_temp, typ2_temp, expression_temp, env_temp) => 
-								if checkTypes(BinType(typ1_temp, typ2_temp), typ2) = false then (print("Incorrect return type of function. Expected "^typtostr(typ2)^", got "^typtostr(BinType(typ1_temp, typ2_temp))^".\n"); raise brokenTypes) else res
+							BoolVal b => if checkTypes(Bool, typ2) = false then (print("Incorrect return type of function "^name^". Expected "^typtostr(typ2)^", got Bool.\n"); raise brokenTypes) else res
+							| IntVal n => if checkTypes(Int, typ2) = false then (print("Incorrect return type of function "^name^". Expected "^typtostr(typ2)^", got Int.\n"); raise brokenTypes) else res
+							| FunVal (arg_temp, typ1_temp, typ2_temp, expression_temp, env_temp, name_temp) => 
+								if checkTypes(BinType(typ1_temp, typ2_temp), typ2) = false then (print("Incorrect return type of function "^name^". Expected "^typtostr(typ2)^", got "^typtostr(BinType(typ1_temp, typ2_temp))^".\n"); raise brokenTypes) else res
 							| _ => raise brokenTypes )
 					end
 				| _ => raise brokenTypes
 		in
 			if check() then eval()
-			else (print("Incorrect type of argument given to function.\n"); raise brokenTypes)
+			else 
+				(case f of FunVal(arg, typ1, typ2, expression, env_fun, name) => 
+				(print("Incorrect type of actual parameter given to function "^name^".\n"); raise brokenTypes)
+				| _ => (print("Function application to non-function.\n"); raise brokenTypes) )
 		end
 and
 evalFunc(f : exp, env : environment) = 
-	(case f of FnExp(VarExp arg, typ1, typ2, expression, env_temp) => 
-		if checkTypes(getTypeFun(f, env_temp, []), BinType(typ1, typ2)) = true then StringVal ("Function ("^arg^": "^typtostr(typ1)^" ): "^typtostr(typ2))
-		else (print("Incorrect function signature at "^arg^". Expected "^typtostr(BinType(typ1, typ2))^", got "^typtostr(getTypeFun(f, env_temp, []))^".\n"); raise brokenTypes)
+	(case f of FnExp(VarExp arg, typ1, typ2, expression, env_temp, name) => 
+		if checkTypes(getTypeFun(f, env_temp, []), BinType(typ1, typ2)) = true then StringVal ("Function "^name^"("^arg^": "^typtostr(typ1)^" ): "^typtostr(typ2))
+		else (print("Incorrect function signature at "^name^". Expected "^typtostr(BinType(typ1, typ2))^", got "^typtostr(getTypeFun(f, env_temp, []))^".\n"); raise brokenTypes)
 	| _ => ( raise brokenTypes))
 and
 evalProgram(arg, env) = 
@@ -201,15 +213,15 @@ evalProgram(arg, env) =
 		Program(p, b) =>
 			(case p of Function(f) =>
 				(case f of Fun(VarExp(var) , bound , typ1 , typ2 , expression, env_fun) =>
-					( (funcs := envAdd(var, FunVal(bound , typ1 , typ2 , expression, envAdd(var, StringVal var, env)), !funcs) ;  
-						evalFunc(FnExp(bound , typ1 , typ2 , expression, envAdd(var, StringVal var, env)), envAdd(var, StringVal var, env)) :: evalProgram(b, envAdd(var, FunVal(bound , typ1 , typ2 , expression, envAdd(var, StringVal var, env)), env)))  )
+					( (funcs := envAdd(var, FunVal(bound , typ1 , typ2 , expression, envAdd(var, StringVal var, env), var), !funcs) ;  
+						evalFunc(FnExp(bound , typ1 , typ2 , expression, envAdd(var, StringVal var, env), var), envAdd(var, StringVal var, env)) :: evalProgram(b, envAdd(var, FunVal(bound , typ1 , typ2 , expression, envAdd(var, StringVal var, env), var), env)))  )
 				| _ => raise brokenTypes)
 			| Expression(e) =>
 				evalExp(e, env) :: evalProgram(b, env))
 		| Single(p) =>
 			(case p of Function(f) =>
 				(case f of Fun(VarExp(var) , bound , typ1 , typ2 , expression, env_fun) =>
-					[(funcs := envAdd(var, FunVal(bound , typ1 , typ2 , expression, envAdd(var, StringVal var, env)), !funcs); evalFunc(FnExp(bound , typ1 , typ2 , expression, envAdd(var, StringVal var, env)), envAdd(var, StringVal var, env)))]
+					[(funcs := envAdd(var, FunVal(bound , typ1 , typ2 , expression, envAdd(var, StringVal var, env), var), !funcs); evalFunc(FnExp(bound , typ1 , typ2 , expression, envAdd(var, StringVal var, env), var), envAdd(var, StringVal var, env)))]
 				| _ => raise brokenTypes)
 			| Expression(e) =>
 				[evalExp(e, env)] )
@@ -251,7 +263,7 @@ fun evalResult([], ct) = ()
 		case x of
 			BoolVal b1 => ( ( print("Statement "^Int.toString(ct)^": "); print ((Bool.toString b1)^"\n") ) ; (evalResult(l, ct+1)) )
 			| IntVal n1 => ( (print("Statement "^Int.toString(ct)^": "); print ((Int.toString n1)^"\n") ) ; (evalResult(l, ct+1)) )
-			| FunVal (VarExp(bound) , typ1 , typ2 , expression, env) =>  ((print("Statement "^Int.toString(ct)^": "); print ("Fn ("^bound^": "^typtostr(typ1)^" ): "^typtostr(typ2)^"\n")) ; (evalResult(l, ct+1)))
+			| FunVal (VarExp(bound) , typ1 , typ2 , expression, env, name) =>  ((print("Statement "^Int.toString(ct)^": "); print ("Fn ("^bound^": "^typtostr(typ1)^" ): "^typtostr(typ2)^"\n")) ; (evalResult(l, ct+1)))
 			| StringVal s1 => ((print("Statement "^Int.toString(ct)^": "); print (s1^"\n") ) ; (evalResult(l, ct+1)))
 			| _ => raise brokenTypes
 

@@ -26,7 +26,7 @@ and
 		| LetExp of decl * exp
 		| IfThenElseExp of exp * exp * exp
 		| AppExp of exp * exp
-		| FnExp of exp * typ * typ * exp * (id * value) list
+		| FnExp of exp * typ * typ * exp * (id * value) list * id
 
 and
 	function = Fun of exp * exp * typ * typ * exp * (id * value) list
@@ -34,7 +34,7 @@ and
 	value = IntVal of int
            | StringVal of string
            | BoolVal of bool
-           | FunVal of exp * typ * typ * exp * (id * value) list
+           | FunVal of exp * typ * typ * exp * (id * value) list * id
 	
 type environment = (id * value) list
 
@@ -89,7 +89,7 @@ ExpressionToString(e, ct) =
 		| LetExp(dec, ex) => ( print("LetExp(\n"); DeclToString(dec, ct+1); print(",\n"); ExpressionToString(ex, ct+1); print(")") )
 		| IfThenElseExp(e1, e2, e3) => ( print("IfThenElseExp(\n"); ExpressionToString(e1, ct+1); print(",\n"); ExpressionToString(e2, ct+1); print(",\n"); ExpressionToString(e3, ct+1); print(")") )
 		| AppExp(e1, e2) => ( print("AppExp(\n"); ExpressionToString(e1, ct+1); print(",\n"); ExpressionToString(e2, ct+1); print(")") )
-		| FnExp(arg, typ1, typ2, expression, env) => (print("FnExp(\n"); ExpressionToString(arg, ct+1); print(",\n"); TypeToString(typ1, ct+1); print(",\n"); TypeToString(typ2, ct+1); print(",\n"); ExpressionToString(expression, ct+1); print(")")) )
+		| FnExp(arg, typ1, typ2, expression, env, name) => (print("FnExp(\n"); ExpressionToString(arg, ct+1); print(",\n"); TypeToString(typ1, ct+1); print(",\n"); TypeToString(typ2, ct+1); print(",\n"); ExpressionToString(expression, ct+1); print(")")) )
 and
 DeclToString(dec, ct) = 
 	( indent(ct); 
